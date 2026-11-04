@@ -104,6 +104,7 @@ __maybe_unused static int size_to_page_order(unsigned long size)
         return (int)order;
 }
 
+/* Lab 2 exercise 3 is provided; no implementation is required. */
 /* Currently, BUG_ON no available memory. */
 void *_kmalloc(size_t size, bool is_record, size_t *real_size)
 {
@@ -114,24 +115,20 @@ void *_kmalloc(size_t size, bool is_record, size_t *real_size)
                 return ZERO_SIZE_PTR;
 
         if (size <= SLAB_MAX_SIZE) {
-                /* LAB 2 TODO 3 BEGIN */
-                /* Step 1: Allocate in slab for small requests. */
-                /* BLANK BEGIN */
-                UNUSED(addr);
-                UNUSED(order);
-
-                /* BLANK END */
+                /* Allocate in slab for small requests. */
+                addr = alloc_in_slab(size, real_size);
 #if ENABLE_MEMORY_USAGE_COLLECTING == ON
-                if(is_record && collecting_switch) {
+                if (is_record && collecting_switch) {
                         record_mem_usage(*real_size, addr);
-		}
+                }
 #endif
         } else {
-                /* Step 2: Allocate in buddy for large requests. */
-                /* BLANK BEGIN */
-
-                /* BLANK END */
-                /* LAB 2 TODO 3 END */
+                /* Allocate in buddy for large requests. */
+                BUG_ON(size > (BUDDY_PAGE_SIZE << (BUDDY_MAX_ORDER - 1)));
+                order = size_to_page_order(size);
+                addr = _get_pages(order, is_record);
+                if (real_size)
+                        *real_size = BUDDY_PAGE_SIZE << order;
         }
 
         BUG_ON(!addr);

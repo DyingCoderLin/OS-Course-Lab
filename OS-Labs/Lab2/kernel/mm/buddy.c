@@ -138,18 +138,18 @@ struct page *buddy_get_pages(struct phys_mem_pool *pool, int order)
 
         lock(&pool->buddy_lock);
 
-        /* LAB 2 TODO 1 BEGIN */
-        /*
-         * Hint: Find a chunk that satisfies the order requirement
-         * in the free lists, then split it if necessary.
-         */
-        /* BLANK BEGIN */
-        UNUSED(cur_order);
-        UNUSED(free_list);
-
-        /* BLANK END */
-        /* LAB 2 TODO 1 END */
-out: __maybe_unused
+        for (cur_order = order; cur_order < BUDDY_MAX_ORDER; cur_order++) {
+                free_list = &pool->free_lists[cur_order].free_list;
+                if (!list_empty(free_list)) {
+                        page = list_entry(free_list->next, struct page, node);
+                        list_del(&page->node);
+                        pool->free_lists[cur_order].nr_free -= 1;
+                        page = split_chunk(pool, order, page);
+                        page->allocated = 1;
+                        goto out;
+                }
+        }
+out:
         unlock(&pool->buddy_lock);
         return page;
 }
@@ -160,16 +160,12 @@ void buddy_free_pages(struct phys_mem_pool *pool, struct page *page)
         struct list_head *free_list;
         lock(&pool->buddy_lock);
 
-        /* LAB 2 TODO 1 BEGIN */
-        /*
-         * Hint: Merge the chunk with its buddy and put it into
-         * a suitable free list.
-         */
-        /* BLANK BEGIN */
-        UNUSED(free_list);
-        UNUSED(order);
-        /* BLANK END */
-        /* LAB 2 TODO 1 END */
+        page->allocated = 0;
+        page = merge_chunk(pool, page);
+        order = page->order;
+        free_list = &pool->free_lists[order].free_list;
+        list_add(&page->node, free_list);
+        pool->free_lists[order].nr_free += 1;
 
         unlock(&pool->buddy_lock);
 }

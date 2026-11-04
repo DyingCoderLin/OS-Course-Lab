@@ -13,7 +13,7 @@ ChCore 使用伙伴系统（buddy system）[^buddy]对物理页进行管理，�
 ChCore 中每个由伙伴系统管理的内存区域称为一个 `struct phys_mem_pool`，该结构体中包含物理页元信息的起始地址（`page_metadata`）、伙伴系统各阶内存块的空闲链表（`free_lists`）等。
 
 > [!CODING] 练习题1
-> 完成 `kernel/mm/buddy.c` 中的 `split_chunk`、`merge_chunk`、`buddy_get_pages`、 和 `buddy_free_pages` 函数中的 `LAB 2 TODO 1` 部分，其中 `buddy_get_pages` 用于分配指定阶大小的连续物理页，`buddy_free_pages` 用于释放已分配的连续物理页。
+> 完成 `kernel/mm/buddy.c` 中的 `split_chunk`、`merge_chunk`、~~`buddy_get_pages`、 和 `buddy_free_pages`~~ 函数中的 `LAB 2 TODO 1` 部分，~~其中 `buddy_get_pages` 用于分配指定阶大小的连续物理页，`buddy_free_pages` 用于释放已分配的连续物理页~~。
 
 > [!HINT]
 >
@@ -21,33 +21,33 @@ ChCore 中每个由伙伴系统管理的内存区域称为一个 `struct phys_me
 > - 可使用 `get_buddy_chunk` 函数获得某个物理内存块的伙伴块
 > - 更多提示见代码注释
 
-## SLAB分配器
+## SLAB分配器（无需完成）
 
-我们希望通过基于伙伴系统的物理内存管理，在内核中进行动态内存分配，也就是可以使用 `kmalloc` 函数（对应用户态的 `malloc`）。ChCore 的 `kmalloc` 对于较小的内存分配需求采用 SLAB 分配器[^slab]，对于较大的分配需求则直接从伙伴系统中分配物理页。动态分配出的物理页被转换为内核虚拟地址（Kernel Virtual Address，KVA），也就是在 LAB 1 中我们映射的 `0xffff_ff00_0000_0000` 之后的地址。我们在练习题 1 中已经实现了伙伴系统，接下来让我们实现 SLAB 分配器吧。
+~~我们希望通过基于伙伴系统的物理内存管理，在内核中进行动态内存分配，也就是可以使用 `kmalloc` 函数（对应用户态的 `malloc`）。ChCore 的 `kmalloc` 对于较小的内存分配需求采用 SLAB 分配器[^slab]，对于较大的分配需求则直接从伙伴系统中分配物理页。动态分配出的物理页被转换为内核虚拟地址（Kernel Virtual Address，KVA），也就是在 LAB 1 中我们映射的 `0xffff_ff00_0000_0000` 之后的地址。我们在练习题 1 中已经实现了伙伴系统，接下来让我们实现 SLAB 分配器吧。~~
 
 > [!CODING] 练习题2
-> 完成 `kernel/mm/slab.c` 中的 `choose_new_current_slab`、`alloc_in_slab_impl` 和 `free_in_slab` 函数中的 `LAB 2 TODO 2` 部分，其中 `alloc_in_slab_impl` 用于在 slab 分配器中分配指定阶大小的内存，而 `free_in_slab` 则用于释放上述已分配的内存。
+> ~~完成 `kernel/mm/slab.c` 中的 `choose_new_current_slab`、`alloc_in_slab_impl` 和 `free_in_slab` 函数中的 `LAB 2 TODO 2` 部分，其中 `alloc_in_slab_impl` 用于在 slab 分配器中分配指定阶大小的内存，而 `free_in_slab` 则用于释放上述已分配的内存。~~
 
 > [!HINT]
 >
-> - 你仍然可以使用上个练习中提到的链表相关函数和宏来对 SLAB 分配器中的链表进行操作
-> - 更多提示见代码注释
+> - ~~你仍然可以使用上个练习中提到的链表相关函数和宏来对 SLAB 分配器中的链表进行操作~~
+> - ~~更多提示见代码注释~~
 
-## Kmalloc
+## Kmalloc（无需完成）
 
-有了伙伴系统和 SLAB 分配器，就可以实现 `kmalloc` 了。
+~~有了伙伴系统和 SLAB 分配器，就可以实现 `kmalloc` 了。~~
 
 > [!CODING] 练习题 3
-> 完成 `kernel/mm/kmalloc.c` 中的 `_kmalloc` 函数中的 `LAB 2 TODO 3` 部分，在适当位置调用对应的函数，实现 `kmalloc` 功能
+> ~~完成 `kernel/mm/kmalloc.c` 中的 `_kmalloc` 函数中的 `LAB 2 TODO 3` 部分，在适当位置调用对应的函数，实现 `kmalloc` 功能~~
 
 > [!HINT]
 >
-> - 你可以使用 `get_pages` 函数从伙伴系统中分配内存，使用 `alloc_in_slab` 从 SLAB 分配器中分配内存
-> - 更多提示见代码注释
+> - ~~你可以使用 `get_pages` 函数从伙伴系统中分配内存，使用 `alloc_in_slab` 从 SLAB 分配器中分配内存~~
+> - ~~更多提示见代码注释~~
 
 
-> [!SUCCESS] kmalloc
-> 现在内核中已经能够正常使用 `kmalloc` 和 `kfree` 了
+~~> [!SUCCESS] kmalloc~~
+~~> 现在内核中已经能够正常使用 `kmalloc` 和 `kfree` 了~~
 
 ---
 

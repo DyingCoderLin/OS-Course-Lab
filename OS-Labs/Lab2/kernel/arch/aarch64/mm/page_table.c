@@ -288,6 +288,7 @@ void free_page_table(void *pgtbl)
 }
 #endif
 
+/* Only query_in_pgtbl is a student TODO in Lab 2 exercise 4. */
 /*
  * Translate a va to pa, and get its pte for the flags
  */
@@ -310,19 +311,38 @@ static int map_range_in_pgtbl_common(void *pgtbl, vaddr_t va, paddr_t pa,
                                      size_t len, vmr_prop_t flags, int kind,
                                      __maybe_unused long *rss)
 {
-        /* LAB 2 TODO 4 BEGIN */
-        /*
-         * Hint: Walk through each level of page table using `get_next_ptp`,
-         * create new page table page if necessary, fill in the final level
-         * pte with the help of `set_pte_flags`. Iterate until all pages are
-         * mapped.
-         * Since we are adding new mappings, there is no need to flush TLBs.
-         * Return 0 on success.
-         */
-        /* BLANK BEGIN */
+        size_t offset;
+        int level;
+        int ret;
 
-        /* BLANK END */
-        /* LAB 2 TODO 4 END */
+        if (!pgtbl || (va & PAGE_MASK) || (pa & PAGE_MASK) || len > ~0UL - va)
+                return -EINVAL;
+        for (offset = 0; offset < len; offset += PAGE_SIZE) {
+                ptp_t *table = pgtbl;
+                ptp_t *next;
+                pte_t *pte;
+                pte_t value = {.pte = 0};
+
+                for (level = L0; level < L3; level++) {
+                        ret = get_next_ptp(table,
+                                           level,
+                                           va + offset,
+                                           &next,
+                                           &pte,
+                                           true,
+                                           rss);
+                        if (ret < 0)
+                                return ret;
+                        if (ret != NORMAL_PTP)
+                                return -EINVAL;
+                        table = next;
+                }
+                value.l3_page.is_valid = 1;
+                value.l3_page.is_page = 1;
+                value.l3_page.pfn = (pa + offset) >> PAGE_SHIFT;
+                set_pte_flags(&value, flags, kind);
+                table->ent[GET_L3_INDEX(va + offset)] = value;
+        }
         dsb(ishst);
         isb();
         return 0;
@@ -388,19 +408,44 @@ __maybe_unused static void recycle_pgtable_entry(ptp_t *l0_ptp, ptp_t *l1_ptp,
 int unmap_range_in_pgtbl(void *pgtbl, vaddr_t va, size_t len,
                          __maybe_unused long *rss)
 {
-        /* LAB 2 TODO 4 BEGIN */
-        /*
-         * Hint: Walk through each level of page table using `get_next_ptp`,
-         * mark the final level pte as invalid. Iterate until all pages are
-         * unmapped.
-         * You don't need to flush tlb here since tlb is now flushed after
-         * this function is called.
-         * Return 0 on success.
-         */
-        /* BLANK BEGIN */
+        size_t offset;
+        int level;
+        int ret;
 
-        /* BLANK END */
-        /* LAB 2 TODO 4 END */
+        if (!pgtbl || (va & PAGE_MASK) || len > ~0UL - va)
+                return -EINVAL;
+        for (offset = 0; offset < len; offset += PAGE_SIZE) {
+                ptp_t *tables[4] = {pgtbl};
+                pte_t *pte;
+
+                for (level = L0; level < L3; level++) {
+                        ret = get_next_ptp(tables[level],
+                                           level,
+                                           va + offset,
+                                           &tables[level + 1],
+                                           &pte,
+                                           false,
+                                           NULL);
+                        if (ret == -ENOMAPPING)
+                                break;
+                        if (ret < 0)
+                                return ret;
+                        if (ret != NORMAL_PTP)
+                                return -EINVAL;
+                }
+                if (level != L3)
+                        continue;
+                pte = &tables[L3]->ent[GET_L3_INDEX(va + offset)];
+                if (IS_PTE_INVALID(pte->pte))
+                        continue;
+                pte->pte = PTE_DESCRIPTOR_INVALID;
+                recycle_pgtable_entry(tables[L0],
+                                      tables[L1],
+                                      tables[L2],
+                                      tables[L3],
+                                      va + offset,
+                                      rss);
+        }
 
         dsb(ishst);
         isb();
@@ -410,17 +455,25 @@ int unmap_range_in_pgtbl(void *pgtbl, vaddr_t va, size_t len,
 
 int mprotect_in_pgtbl(void *pgtbl, vaddr_t va, size_t len, vmr_prop_t flags)
 {
-        /* LAB 2 TODO 4 BEGIN */
-        /*
-         * Hint: Walk through each level of page table using `get_next_ptp`,
-         * modify the permission in the final level pte using `set_pte_flags`.
-         * The `kind` argument of `set_pte_flags` should always be `USER_PTE`.
-         * Return 0 on success.
-         */
-        /* BLANK BEGIN */
+        size_t offset;
+        int ret;
 
-        /* BLANK END */
-        /* LAB 2 TODO 4 END */
+        if (!pgtbl || (va & PAGE_MASK) || len > ~0UL - va)
+                return -EINVAL;
+        for (offset = 0; offset < len; offset += PAGE_SIZE) {
+                pte_t *pte;
+
+                ret = query_in_pgtbl(pgtbl, va + offset, NULL, &pte);
+                if (ret < 0)
+                        return ret;
+                if (!IS_PTE_TABLE(pte->pte))
+                        return -EINVAL;
+                pte->l3_page.PXN = 0;
+                pte->l3_page.UXN = 0;
+                set_pte_flags(pte, flags, USER_PTE);
+        }
+        dsb(ishst);
+        isb();
         return 0;
 }
 

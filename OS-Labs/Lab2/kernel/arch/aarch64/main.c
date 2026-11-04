@@ -28,7 +28,7 @@
 #include <irq/irq.h>
 #include <object/thread.h>
 
-ALIGN(STACK_ALIGNMENT)
+ALIGN(PAGE_SIZE)
 char cpu_stacks[PLAT_CPU_NUM][CPU_STACK_SIZE];
 struct lock big_kernel_lock;
 
