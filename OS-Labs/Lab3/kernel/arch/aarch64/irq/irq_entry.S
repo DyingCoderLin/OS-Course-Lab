@@ -32,44 +32,31 @@
 
 /* See more details about the bias in registers.h */
 .macro	exception_enter
-
 	/* LAB 3 TODO BEGIN */
-
+	/* Allocate the context frame and save the general-purpose registers x0 through x29. */
 	/* LAB 3 TODO END */
-
 	mrs	x21, sp_el0
 	mrs	x22, elr_el1
 	mrs	x23, spsr_el1
-
-	/* LAB 3 TODO BEGIN */
-
-	/* LAB 3 TODO END */
-
+	stp	x30, x21, [sp, #16 * 15]
+	stp	x22, x23, [sp, #16 * 16]
 .endm
 
 .macro	exception_exit
-
-	/* LAB 3 TODO BEGIN */
-
-	/* LAB 3 TODO END */
-
+	ldp	x22, x23, [sp, #16 * 16]
+	ldp	x30, x21, [sp, #16 * 15]
 	msr	sp_el0, x21
 	msr	elr_el1, x22
 	msr	spsr_el1, x23
-
 	/* LAB 3 TODO BEGIN */
-
+	/* Restore x0 through x29 and release the context frame. */
 	/* LAB 3 TODO END */
-
 	eret
 .endm
 
-
 .macro switch_to_cpu_stack
 	mrs     x24, TPIDR_EL1
-	/* LAB 3 TODO BEGIN */
-
-	/* LAB 3 TODO END */
+	add	x24, x24, #OFFSET_LOCAL_CPU_STACK
 	ldr	x24, [x24]
 	mov	sp, x24
 .endm
@@ -110,9 +97,8 @@
 /* el1_vector should be set in VBAR_EL1. The last 11 bits of VBAR_EL1 are reserved. */
 .align	11
 EXPORT(el1_vector)
-
 	/* LAB 3 TODO BEGIN */
-
+	/* Populate the exception vector table in architectural order. */
 	/* LAB 3 TODO END */
 
 /*
@@ -145,20 +131,15 @@ fiq_el1h:
 error_el1t:
 error_el1h:
 sync_el1t:
-	/* LAB 3 TODO BEGIN */
-
-	/* LAB 3 TODO END */
+	bl unexpected_handler
 
 sync_el1h:
 	exception_enter
 	mov	x0, #SYNC_EL1h
 	mrs	x1, esr_el1
 	mrs	x2, elr_el1
-
-	/* LAB 3 TODO BEGIN */
-	/* jump to handle_entry_c, store the return value as the ELR_EL1 */
-
-	/* LAB 3 TODO END */
+	bl	handle_entry_c
+	str     x0, [sp, #16 * 16] /* store the return value as the ELR_EL1 */
 	exception_exit
 
 sync_el0_64:

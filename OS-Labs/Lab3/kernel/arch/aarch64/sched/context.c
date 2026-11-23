@@ -22,8 +22,7 @@ void init_thread_ctx(struct thread *thread, vaddr_t stack, vaddr_t func,
         /* Fill the context of the thread */
 
         /* LAB 3 TODO BEGIN */
-        /* SP_EL0, ELR_EL1, SPSR_EL1*/
-
+        /* Initialize the stack, entry address and processor state for this thread type. */
         /* LAB 3 TODO END */
 
         /* Set the state of the thread */

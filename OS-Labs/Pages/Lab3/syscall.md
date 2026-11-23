@@ -9,15 +9,15 @@
 完成保存后，需要进行内核栈切换，首先从`TPIDR_EL1`寄存器中读取到当前核的`per_cpu_info`（参考`kernel/include/arch/aarch64/arch/machine/smp.h`）,从而拿到其中的`cpu_stack`地址。
 
 > [!CODING] 练习题6
-> 填写 `kernel/arch/aarch64/irq/irq_entry.S` 中的 `exception_enter` 与 `exception_exit`，实现上下文保存的功能，以及 `switch_to_cpu_stack` 内核栈切换函数。如果正确完成这一部分，可以通过 Userland 测试点。这代表着程序已经可以在用户态与内核态间进行正确切换。显示如下结果
+> 完成 `kernel/arch/aarch64/irq/irq_entry.S` 中的两处填空：在 `exception_enter` 中分配上下文栈帧并保存通用寄存器 x0 至 x29，在 `exception_exit` 中恢复这些寄存器并释放栈帧。内核栈切换已提供。如果正确完成这一部分，可以通过 Userland 测试点。这代表着程序已经可以在用户态与内核态间进行正确切换。显示如下结果
 >
 > ```
-> Hello userland!
+> Hello Userland!
 > ```
 
 ## 用户态libc支持
 
-在本实验中新加入了 `libc` 文件，用户态程序可以链接其编译生成的`libc.so`,并通过 `libc` 进行系统调用从而进行向内核态的异常切换。在实验提供的 `libc` 中，尚未实现 `printf` 的系统调用，因此用户态程序无法进行正常输出。实验接下来将对 `printf` 函数的调用链进行分析与探索。
+在本实验中新加入了 `libc` 文件，用户态程序可以链接其编译生成的`libc.so`,并通过 `libc` 进行系统调用从而进行向内核态的异常切换。实验提供的 `libc` 已包含 `printf` 使用的输出系统调用。实验接下来将对 `printf` 函数的调用链进行分析与探索。
 
 `printf` 函数调用了 `vfprintf`，其中文件描述符参数为 `stdout`。这说明在 `vfprintf` 中将使用 `stdout` 的某些操作函数。
 
@@ -31,12 +31,7 @@
 > [!HINT]
 > `chcore_write` 中使用了文件描述符，`stdout` 描述符的设置在`user/chcore-libc/libchcore/porting/overrides/src/chcore-port/syscall_dispatcher.c` 中。
 
-`chcore_stdout_write` 中的核心函数为 `put`，此函数的作用是向终端输出一个字符串。
-
-> [!CODING] 练习题8:
-> 在其中添加一行以完成系统调用，目标调用函数为内核中的 `sys_putstr`。使用 `chcore_syscallx` 函数进行系统调用。
-
-至此，我们完成了对 `printf` 函数的分析及完善。从 `printf` 的例子我们也可以看到从通用 api 向系统相关 abi 的调用过程，并最终通过系统调用完成从用户态向内核态的异常切换。
+`chcore_stdout_write` 调用 `put`，后者通过系统调用将缓冲区及其长度传给内核中的 `sys_putstr`，把字符串输出到终端。
 
 ---
 > [!SUCCESS]

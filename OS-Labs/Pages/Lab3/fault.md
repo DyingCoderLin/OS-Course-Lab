@@ -16,8 +16,8 @@ AArch64 中的每个异常级别都有其自己独立的异常向量表，其虚
 在 ChCore 中，仅使用了 EL0 和 EL1 两个异常级别，因此仅需要对 EL1 异常向量表进行初始化即可。在本实验中，ChCore 内除系统调用外所有的同步异常均交由 `handle_entry_c` 函数进行处理。遇到异常时，硬件将根据 ChCore 的配置执行对应的汇编代码，将异常类型和当前异常处理程序条目类型作为参数传递，对于 sync_el1h 类型的异常，跳转 `handle_entry_c` 使用 C 代码处理异常。对于 irq_el1t、fiq_el1t、fiq_el1h、error_el1t、error_el1h、sync_el1t 则跳转 `unexpected_handler` 处理异常。
 
 > [!CODING] 练习题5
-> 按照前文所述的表格填写 `kernel/arch/aarch64/irq/irq_entry.S` 中的异常向量表，并且增加对应的函数跳转操作
+> 对照源码中的布局表，在 `kernel/arch/aarch64/irq/irq_entry.S` 的 `el1_vector` 中按架构顺序填写 16 个异常向量表项。各入口对应的处理分支已提供。
 
 ---
 > [!SUCCESS]
-> 以上为Lab2 Part2的全部内容，完成后你可以获得60分
+> 完成异常向量表和后续练习 6 后，可以通过 Userland 测试点。
