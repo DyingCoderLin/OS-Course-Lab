@@ -351,11 +351,9 @@ cap_t sys_create_cap_group(unsigned long cap_group_args_p)
                 r = -ENOMEM;
                 goto out_fail;
         }
-        /* LAB 3 TODO BEGIN */
-        /* Initialize the new group from the user arguments and handle failure. */
-        r = -EINVAL;
-        goto out_free_obj_new_grp;
-        /* LAB 3 TODO END */
+        r = cap_group_init_user(new_cap_group, BASE_OBJECT_NUM, &args);
+        if (r < 0)
+                goto out_free_obj_new_grp;
 
         cap = cap_alloc(current_cap_group, new_cap_group);
         if (cap < 0) {

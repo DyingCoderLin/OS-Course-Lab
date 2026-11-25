@@ -234,20 +234,21 @@ void create_root_thread(void)
                 memcpy(&raw_flags, phdr + PHDR_FLAGS_OFF, sizeof(raw_flags));
                 flags = le32_to_cpu(raw_flags);
 
-                offset = read_phdr_u64(phdr + PHDR_OFFSET_OFF);
-                vaddr = read_phdr_u64(phdr + PHDR_VADDR_OFF);
-                filesz = read_phdr_u64(phdr + PHDR_FILESZ_OFF);
-                memsz = read_phdr_u64(phdr + PHDR_MEMSZ_OFF);
-                BUG_ON(filesz > memsz);
+                /* LAB 3 TODO BEGIN */
+                /* Read the segment offset, address and sizes; check that its file contents fit. */
+                /* LAB 3 TODO END */
 
                 struct pmobject *segment_pmo = NULL;
-                ret = create_pmo(memsz, PMO_DATA, root_cap_group, 0,
-                                 &segment_pmo, PMO_ALL_RIGHTS);
+                /* LAB 3 TODO BEGIN */
+                /* Create the memory object for this segment and record the result. */
+                ret = -ENOMEM;
+                /* LAB 3 TODO END */
 
                 BUG_ON(ret < 0);
 
-                memcpy((void *)phys_to_virt(segment_pmo->start),
-                       image + offset, filesz);
+                /* LAB 3 TODO BEGIN */
+                /* Copy the file-backed bytes into the segment memory object. */
+                /* LAB 3 TODO END */
 
                 unsigned vmr_flags = 0;
                 /* LAB 3 TODO BEGIN */

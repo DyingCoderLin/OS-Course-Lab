@@ -138,8 +138,9 @@ sync_el1h:
 	mov	x0, #SYNC_EL1h
 	mrs	x1, esr_el1
 	mrs	x2, elr_el1
-	bl	handle_entry_c
-	str     x0, [sp, #16 * 16] /* store the return value as the ELR_EL1 */
+	/* LAB 3 TODO BEGIN */
+	/* Handle this EL1 synchronous exception and update the saved return address. */
+	/* LAB 3 TODO END */
 	exception_exit
 
 sync_el0_64:

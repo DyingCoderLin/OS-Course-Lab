@@ -10,21 +10,14 @@ ChCore 中仅使用了其中的两个异常级别：EL0 和 EL1。其中，EL1 �
 
 创建用户程序至少需要包括创建对应的 `cap_group`、加载用户程序镜像并且切换到程序。在内核完成必要的初始化之后，内核将会跳转到创建第一个用户程序的操作中，该操作通过调用 `create_root_thread` 函数完成，本函数完成第一个用户进程的创建，其中的操作包括从`procmgr`镜像中读取程序信息，调用`create_root_cap_group`创建第一个 `cap_group` 进程，并在 `root_cap_group` 中创建第一个线程，线程加载着信息中记录的 elf 程序（实际上就是`procmgr`系统服务）。此外，用户程序也可以通过 `sys_create_cap_group` 系统调用创建一个全新的 `cap_group`。
 
-> [!CODING] 练习题1
-> 在 `kernel/object/cap_group.c` 中完成 `sys_create_cap_group` 中的一处填空：根据用户参数初始化新权利组，并在初始化失败时走已有的错误清理路径。
-
-> [!SUCCESS] CapGroup
-> 根进程的 `create_root_cap_group` 已提供。Cap Create Pretest 检查根进程的权利组，该项占 20 分；普通进程创建还会用到上面的系统调用。
-
-> [!HINT]
-> 可以阅读 `kernel/object/capability.c` 中各个与 cap 机制相关的函数以及参考文档。
+权利组的创建流程见 `kernel/object/cap_group.c`，相关能力操作见 `kernel/object/capability.c`。
 
 ## ELF加载
 
 然而，完成 `cap_group` 的分配之后，用户程序并没有办法直接运行，因为`cap_group`只是一个资源集合的概念。线程才是内核中的调度执行单位，因此还需要进行线程的创建，将用户程序 ELF 的各程序段加载到内存中。(此为内核中 ELF 程序加载过程，用户态进行 ELF 程序解析可参考`user/system-services/system-servers/procmgr/libs/libchcoreelf/libchcoreelf.c`，如何加载程序可以对`user/system-services/system-servers/procmgr/srvmgr.c`中的`procmgr_launch_process`函数进行详细分析)
 
 > [!CODING] 练习题2
-> 在 `kernel/object/thread.c` 中完成 `create_root_thread` 中的一处填空，根据 ELF 程序段的读、写、执行标志设置对应的虚拟内存映射权限。
+> 在 `kernel/object/thread.c` 中完成 `create_root_thread` 中的四处填空：读取段在镜像中的偏移、虚拟地址、文件大小和内存大小并检查大小关系；创建段内存对象；将文件中的段内容复制到该对象；将 ELF 段标志转换为映射权限。
 
 > [!HINT]
 >
@@ -36,8 +29,7 @@ ChCore 中仅使用了其中的两个异常级别：EL0 和 EL1。其中，EL1 �
 
 完成用户程序的内存分配后，用户程序代码实际上已经被映射在`root_cap_group`的虚拟地址空间中。接下来需要对创建的线程进行初始化，以做好从内核态切换到用户态线程的准备。
 
-> [!CODING] 练习题3
-> 在 `kernel/arch/aarch64/sched/context.c` 中完成 `init_thread_ctx` 函数，完成线程上下文的初始化。
+线程的初始栈、程序入口和处理器状态由 `kernel/arch/aarch64/sched/context.c` 中的 `init_thread_ctx` 设置。
 
 至此，我们完成了第一个用户进程与第一个用户线程的创建。接下来就可以从内核态向用户态进行跳转了。
 回到`kernel/arch/aarch64/main.c`，在`create_root_thread()`完成后，分别调用了`sched()`与`eret_to_thread(switch_context())`。
